@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableJpaAuditing
-public class UserServiceScalerProjectApplication {
+public class  UserServiceScalerProjectApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(UserServiceScalerProjectApplication.class, args);

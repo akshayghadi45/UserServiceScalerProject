@@ -4,6 +4,7 @@ import org.java.userservicescalerproject.dtos.*;
 import org.java.userservicescalerproject.models.Token;
 import org.java.userservicescalerproject.models.User;
 import org.java.userservicescalerproject.services.UserService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,9 +41,12 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
 
-    @GetMapping("/validate/{token}")
-    public ResponseEntity<Boolean> validateToken(@PathVariable("token") String token){
+    @PostMapping("/validate")
+    public ResponseEntity<Boolean> validateToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
 
+        if(token.startsWith("Bearer ")){
+            token = token.substring(7);
+        }
         User user = userService.validatetoken(token);
         if(user != null){
             return new ResponseEntity<>(true, HttpStatus.OK);
