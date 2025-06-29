@@ -1,14 +1,18 @@
 package org.java.userservicescalerproject.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.java.userservicescalerproject.dtos.SendEmailDto;
 import org.java.userservicescalerproject.models.Token;
 import org.java.userservicescalerproject.models.User;
 import org.java.userservicescalerproject.repositories.TokenRepository;
 import org.java.userservicescalerproject.repositories.UserRepository;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +29,8 @@ public class UserServiceImpl implements UserService{
     config file and even in config file we can import it form env variables and later */
 
     private static final long EXPIRATION_TIME_IN_MS = 10*60*60*1000;
+    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String,String> kafkaTemplate;
     UserRepository userRepository;
     TokenRepository tokenRepository;
     BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -72,11 +78,17 @@ public class UserServiceImpl implements UserService{
 
     }
 
-    UserServiceImpl(UserRepository userRepository , TokenRepository tokenRepository, BCryptPasswordEncoder bCryptPasswordEncoder,SecretKey secretKey) {
+    UserServiceImpl(UserRepository userRepository ,
+                    TokenRepository tokenRepository,
+                    BCryptPasswordEncoder bCryptPasswordEncoder,
+                    SecretKey secretKey,
+                    ObjectMapper objectMapper, KafkaTemplate<String, String> kafkaTemplate) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.SECRET_KEY=secretKey;
+        this.objectMapper = objectMapper;
+        this.kafkaTemplate = kafkaTemplate;
     }
     @Override
     public User signup(String name, String email, String password) {
@@ -91,6 +103,22 @@ public class UserServiceImpl implements UserService{
         user.setName(name);
         user.setEmail(email);
         user.setPassword(bCryptPasswordEncoder.encode(password));
+
+        //email dto
+        SendEmailDto sendEmailDto = new SendEmailDto();
+        sendEmailDto.setFrom("akshayghadi45@gmail.com");
+        sendEmailDto.setSubject("User registration test");
+        sendEmailDto.setBody("Hello " + name);
+        sendEmailDto.setTo(email);
+        String sendEmailDtoString;
+        try {
+            sendEmailDtoString = objectMapper.writeValueAsString(sendEmailDto);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        kafkaTemplate.send("sendEmail",sendEmailDtoString);
+
         return userRepository.save(user);
     }
 
