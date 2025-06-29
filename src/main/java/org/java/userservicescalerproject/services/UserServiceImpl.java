@@ -80,12 +80,12 @@ public class UserServiceImpl implements UserService{
     }
     @Override
     public User signup(String name, String email, String password) {
-
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isPresent()) {
-            //throw user already present exception
-            return null;
-        }
+/// /Commenting to validate kafka as we want duplicate email to go if it fails for first time
+//        Optional<User> optionalUser = userRepository.findByEmail(email);
+//        if (optionalUser.isPresent()) {
+//            //throw user already present exception
+//            return null;
+//        }
 
         User user = new User();
         user.setName(name);
